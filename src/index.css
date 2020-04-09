@@ -3,3 +3,19 @@
 @tailwind components;
 
 @tailwind utilities;
+
+html {
+  @apply h-full;
+}
+
+body {
+  @apply h-full;
+}
+
+#root {
+  @apply h-full
+}
+
+a {
+  transition: .2s all;
+}

@@ -8,5 +8,10 @@ export enum Event {
 
 export enum Call {
   PassPluginsList = 'PassPluginsList',
-  ReloadAllPlugin = 'ReloadAllPlugin'
+  ReloadAllPlugin = 'ReloadAllPlugin',
+  OpenPluginFolder = 'OpenPluginFolder',
+
+  ReloadPlugin = 'ReloadPlugin',
+  FetchPluginData = 'FetchPluginData',
+  GetPluginData = 'GetPluginData'
 }
