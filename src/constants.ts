@@ -4,6 +4,8 @@ export enum Event {
   PluginBeginLoad = 'PluginBeginLoad',
   PluginLoadFailed = 'PluginLoadFailed',
   PluginLoadSuccess = 'PluginLoadSuccess',
+
+  PluginUpdated = 'PluginUpdated'
 }
 
 export enum Call {

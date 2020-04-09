@@ -19,7 +19,7 @@ class Plugin {
   private vm: NodeVM;
   private trays: Tray[] = [];
 
-  status: Status
+  status = Status.STOPPED
 
   metadata: {
     script: string,
@@ -33,8 +33,7 @@ class Plugin {
     }
   }
 
-  constructor(private pluginPath: string) {
-    this.status = Status.READY
+  constructor(private pluginPath: string, private wc: WebContents) {
     this.metadata = Plugin.getPluginMetaData(pluginPath)
     this.vm = new NodeVM({
       console: "inherit",
@@ -53,9 +52,12 @@ class Plugin {
     });
   }
 
+  sendUpdate () {
+    this.wc.send(Event.PluginUpdated, this.metadata.config.id, this.serialize())
+  }
+
   load() {
     const metaData = Plugin.getPluginMetaData(this.pluginPath)
-
     try {
       this.vm.run(metaData.script);
       this.status = Status.RUNNING
@@ -63,10 +65,11 @@ class Plugin {
       // TODO: catch error
       console.log(e)
     }
+    this.sendUpdate()
   }
 
   reload() {
-    this.destructor()
+    this.deload()
     this.load()
   }
 
@@ -76,7 +79,12 @@ class Plugin {
         tray.destroy();
       });
     }
+  }
+
+  deload() {
+    this.destructor()
     this.status = Status.STOPPED
+    this.sendUpdate()
   }
 
   serialize() {
@@ -98,7 +106,8 @@ export type SerializedPlugin = {
 enum Status {
   READY,
   RUNNING,
-  STOPPED
+  STOPPED,
+  ERROR
 }
 
 class Core {
@@ -133,7 +142,7 @@ class Core {
       plugin.destructor()
     })
 
-    this.plugins = this.collectPluginsPath().map(p => new Plugin(p))
+    this.plugins = this.collectPluginsPath().map(p => new Plugin(p, this.wc))
   }
 
   loadAll() {

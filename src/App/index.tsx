@@ -41,12 +41,7 @@ function App() {
         <div>
           {plugins.map(plugin => {
             return (
-              <div onClick={_ => selectPlugin(plugin)} key={plugin.metadata.config.id} className='px-4 py-4 hover:bg-gray-200'>
-                <h1 className='font-bold'>
-                  {plugin.metadata.config.name}
-                </h1>
-                <p className='text-gray-500 text-sm'>{plugin.metadata.config.id}</p>
-              </div>
+              <PluginMenuItem plugin={plugin} onClick={() => selectPlugin(plugin)} key={plugin.metadata.config.id} />
             )
           })}
         </div>
@@ -59,37 +54,65 @@ function App() {
   )
 }
 
+function useUpdatePluginData(originPlugin: SerializedPlugin) {
+  const [plugin, setPlugin] = React.useState(originPlugin)
+
+  React.useEffect(() => {
+    function handler(event: any, pluginId: string, data: SerializedPlugin) {
+      if (pluginId === plugin.metadata.config.id) {
+        setPlugin(data)
+      }
+    }
+
+    ipcRenderer.on(Event.PluginUpdated, handler)
+
+    return () => {
+      ipcRenderer.removeListener(Event.PluginUpdated, handler)
+    }
+  }, [])
+
+  return {
+    plugin
+  }
+}
+
+function PluginMenuItem({
+  onClick,
+  plugin: originPlugin,
+  selected
+}: {
+  selected?: boolean,
+  onClick: () => void,
+  plugin: SerializedPlugin
+}) {
+
+  const { plugin } = useUpdatePluginData(originPlugin)
+
+  return (
+    <div onClick={onClick} className='px-4 py-4 hover:bg-gray-200'>
+      <h1 className='font-bold'>
+        {plugin.metadata.config.name}
+      </h1>
+      <p className='text-gray-500 text-sm'>{plugin.metadata.config.id}</p>
+    </div>
+  )
+}
+
 function PluginDetail({
-  plugin
+  plugin: originPlugin
 }: {
   plugin: SerializedPlugin
 }) {
 
-  const [pluginData, setPluginData] = React.useState(null as SerializedPlugin | null)
-
-  function getPluginSerializeData() {
-    ipcRenderer.send(Call.FetchPluginData, plugin.metadata.config.id)
-    function getPluginDataHandler(_: any, data: SerializedPlugin) {
-      setPluginData(data)
-    }
-    ipcRenderer.once(`${Call.GetPluginData}_${plugin.metadata.config.id}`, getPluginDataHandler)
-  }
-
-  React.useEffect(() => {
-    getPluginSerializeData()
-  }, [])
+  const { plugin } = useUpdatePluginData(originPlugin)
 
   function reload() {
     ipcRenderer.send(`${Call.ReloadPlugin}`, plugin.metadata.config.id)
   }
 
-  if (!pluginData) {
-    return <div></div>
-  }
-
   return (
     <div>
-      <h1>{pluginData.metadata.config.name}</h1>
+      <h1>{plugin.metadata.config.name}</h1>
       <button onClick={reload}>Reload Plugin</button>
     </div>
   )
