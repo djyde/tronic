@@ -15,8 +15,15 @@ function App () {
     })
   }, [])
 
+  function reload(): void {
+    ipcRenderer.send(Call.ReloadAllPlugin)
+  }
+
   return (
     <div>
+      <div>
+        <button onClick={reload}>Reload</button>
+      </div>
       {plugins.map(plugin => {
         return (
           <div key={plugin.id}>

@@ -1,9 +1,12 @@
-import { ipcMain, Tray, webContents, WebContents } from "electron";
+import { ipcMain, Tray, WebContents, Notification } from "electron";
 import { NodeVM } from "vm2";
 import path = require("path");
 import { Event, Call } from "./constants";
+import * as os from "os";
+import * as fs from "fs";
 
 const DEFAULT_MENU_ICON = path.resolve(__dirname, "../../assets/menu.png");
+const PLUGINS_PATH = path.resolve(os.homedir(), ".ISLAND");
 
 export type PluginConfig = {
   id: string;
@@ -13,7 +16,7 @@ export type PluginConfig = {
 
 class Plugin {
   private vm: NodeVM;
-  private trays: Tray[];
+  private trays: Tray[] = [];
 
   constructor(private script: string, public config: PluginConfig) {
     this.vm = new NodeVM({
@@ -27,6 +30,7 @@ class Plugin {
               return t;
             },
           },
+          Notification
         },
       },
     });
@@ -37,6 +41,7 @@ class Plugin {
       this.vm.run(this.script);
     } catch (e) {
       // TODO: catch error
+      console.log(e)
     }
   }
 
@@ -48,27 +53,6 @@ class Plugin {
     }
   }
 }
-
-const PLUGINS = [
-  {
-    meta: {
-      id: "com.lutaonan.demo",
-      name: "Demo",
-      version: "1.0.0",
-    },
-    script: `
-    console.log('?')
-
-    const Tray = require('Tray')
-    
-    const tray = Tray.init()
-    
-    tray.on('click', (event, bounds, position) => {
-      console.log('click')
-    })
-    `.trimLeft(),
-  },
-];
 
 enum Status {
   READY,
@@ -84,6 +68,41 @@ class Core {
 
   constructor(private wc: WebContents) {
     this.status = Status.READY;
+  }
+
+  loadPlugins(): void {
+    if (!fs.existsSync(PLUGINS_PATH)) {
+      fs.mkdirSync(PLUGINS_PATH);
+    }
+
+    const plugins = fs
+      .readdirSync(PLUGINS_PATH, { withFileTypes: true })
+      .filter((f) => f.isDirectory())
+      .filter((dir) => {
+        return fs.existsSync(
+          path.resolve(PLUGINS_PATH, dir.name, "config.json")
+        );
+      })
+      .map((dir) => {
+        return {
+          script: fs.readFileSync(
+            path.resolve(PLUGINS_PATH, dir.name, "index.js"),
+            { encoding: "utf-8" }
+          ),
+          metadata: JSON.parse(
+            fs.readFileSync(
+              path.resolve(PLUGINS_PATH, dir.name, "config.json"),
+              { encoding: "utf-8" }
+            )
+          ) as PluginConfig,
+        };
+      });
+
+    plugins.forEach((plugin) => {
+      this.use(new Plugin(plugin.script, plugin.metadata));
+    });
+
+
   }
 
   use(plugin: Plugin): void {
@@ -114,26 +133,44 @@ class Core {
   }
 
   reload(): void {
+    // teardown all plugin
     this.plugins.forEach((plugin) => {
-      plugin.pluginInstance.destructor()
-    })
+      plugin.pluginInstance.destructor();
+    });
+
+    this.plugins = []
+    this.loadPlugins()
+    this.runAll()
   }
 }
 
 export function init(wc: WebContents): void {
   const core = new Core(wc);
 
+  ipcMain.on(Call.ReloadAllPlugin, (event) => {
+    core.reload()
+
+    event.reply(
+      `${Call.PassPluginsList}`,
+      core.plugins.map((plugin) => {
+        return {
+          ...plugin.pluginInstance.config,
+        };
+      })
+    );
+  })
+
   ipcMain.on(`${Event.Begin}`, (event) => {
     if (core.status === Status.READY) {
-      PLUGINS.forEach((plugin) => {
-        core.use(new Plugin(plugin.script, plugin.meta));
-      });
-      core.runAll();
+      core.reload()
     }
-    event.reply(`${Call.PassPluginsList}`, core.plugins.map(plugin => {
-      return {
-        ...plugin.pluginInstance.config
-      }
-    }))
+    event.reply(
+      `${Call.PassPluginsList}`,
+      core.plugins.map((plugin) => {
+        return {
+          ...plugin.pluginInstance.config,
+        };
+      })
+    );
   });
 }

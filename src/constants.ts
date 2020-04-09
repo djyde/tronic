@@ -7,5 +7,6 @@ export enum Event {
 }
 
 export enum Call {
-  PassPluginsList = 'PassPluginsList'
+  PassPluginsList = 'PassPluginsList',
+  ReloadAllPlugin = 'ReloadAllPlugin'
 }
