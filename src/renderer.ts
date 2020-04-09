@@ -25,23 +25,9 @@
  *  });
  * ```
  */
-import {  ipcRenderer } from 'electron'
 
-const defaultScript = `
-const tray = require('tray')
+import { render } from 'react-dom'
+import App from './App'
+import './index.css'
 
-tray.addItem({
-  title: 'hello world'
-})
-
-`.trimLeft()
-
-const $ta = document.querySelector('#ta') as HTMLTextAreaElement
-
-const $btn = document.querySelector('#test')
-
-$ta.textContent = defaultScript
-
-$btn.addEventListener('click', e => {
-  ipcRenderer.send('run-script', $ta.value)
-})
+render(App, document.querySelector('#root'))
