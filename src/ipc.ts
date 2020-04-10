@@ -1,4 +1,4 @@
-import { ipcMain, Tray, WebContents, Notification } from "electron";
+import { ipcMain, Tray, WebContents, Notification, Menu, MenuItem } from "electron";
 import { NodeVM } from "vm2";
 import path = require("path");
 import { Event, Call, PluginStatus, PluginConfig, SerializedPlugin } from "./shared";
@@ -44,6 +44,8 @@ class Plugin {
             },
           },
           Notification,
+          Menu,
+          MenuItem,
           logger: this.pushLog.bind(this)
         },
       },

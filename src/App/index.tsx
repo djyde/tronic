@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ipcRenderer, remote } from "electron";
 import { Event, Call, SerializedPlugin, PluginStatus } from "../shared";
+// @ts-ignore
 import classnames from 'classnames'
 
 function App() {

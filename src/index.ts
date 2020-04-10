@@ -13,6 +13,7 @@ const createWindow = () => {
     height: 640,
     width: 1024,
     resizable: false,
+    title: 'Island',
     webPreferences: {
       nodeIntegration: true
     }
