@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ipcRenderer, remote } from "electron";
 import { Event, Call, SerializedPlugin, PluginStatus } from "../shared";
+import classnames from 'classnames'
 
 function App() {
   const [plugins, setPlugins] = React.useState([] as SerializedPlugin[]);
@@ -49,6 +50,7 @@ function App() {
           {plugins.map((plugin) => {
             return (
               <PluginMenuItem
+                selected={currentPlugin?.metadata.config.id === plugin.metadata.config.id}
                 plugin={plugin}
                 onClick={() => selectPlugin(plugin)}
                 key={plugin.metadata.config.id}
@@ -57,7 +59,7 @@ function App() {
           })}
         </div>
       </div>
-      <div>
+      <div className='flex-1'>
         {currentPlugin && (
           <PluginDetail
             key={currentPlugin.metadata.config.id}
@@ -113,7 +115,9 @@ function PluginMenuItem({
   }
 
   return (
-    <div onClick={onClick} className="px-4 py-4 hover:bg-gray-200 flex jsutify-center">
+    <div onClick={onClick} className={classnames('px-4 py-4 hover:bg-gray-200 flex jsutify-center', {
+      'bg-gray-200': selected
+    })}>
       <div className='flex-1'>
         <h1 className="font-bold">{plugin.metadata.config.name}</h1>
         <p className="text-gray-500 text-sm">{plugin.metadata.config.id}</p>
@@ -143,7 +147,8 @@ function PluginDetail({ plugin: originPlugin }: { plugin: SerializedPlugin }) {
         <p>{plugin.metadata.config.id}</p>
         <p>version: {plugin.metadata.config.version}</p>
       </div>
-      <div>
+      <div className='mt-4'>
+        <LogViewer pluginId={plugin.metadata.config.id} />
       </div>
     </div>
   );
@@ -162,6 +167,41 @@ function SwitchButton({
       <span className="slider"></span>
     </label>
   );
+}
+
+function LogViewer ({ pluginId }: {
+  pluginId: string
+}) {
+  
+  const [log, setLog] = React.useState('')
+  const divRef = React.useRef(null as null | HTMLDivElement)
+
+  React.useEffect(() => {
+    function handler(event: any, id: string, logs: string) {
+      if (id === pluginId) {
+        setLog(logs)
+      }
+    }
+    ipcRenderer.on(Call.FetchLog, handler)
+
+    return () => {
+      ipcRenderer.removeListener(Call.FetchLog, handler)
+    }
+  }, [])
+
+  React.useLayoutEffect(() => {
+    if (divRef.current) {
+      divRef.current.scrollTop = divRef.current.scrollHeight
+    }
+  }, [log])
+
+  return (
+    <div>
+      <div ref={divRef} className='w-full border border-gray-200 h-64 whitespace-pre overflow-scroll text-sm select-text'>
+        {log}
+      </div>
+    </div>
+  )
 }
 
 export default <App />;

@@ -16,7 +16,9 @@ export enum Call {
   ReloadPlugin = 'ReloadPlugin',
   FetchPluginData = 'FetchPluginData',
   GetPluginData = 'GetPluginData',
-  DeloadPlugin = 'DeloadPlugin'
+  DeloadPlugin = 'DeloadPlugin',
+
+  FetchLog = 'FetchLog'
 }
 
 export enum PluginStatus {

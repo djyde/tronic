@@ -8,6 +8,7 @@ import open from 'open'
 
 const DEFAULT_MENU_ICON = path.resolve(__dirname, "../../assets/menu.png");
 const PLUGINS_PATH = path.resolve(os.homedir(), ".ISLAND");
+const LOG_LIMIT = 500
 
 class Plugin {
   private vm: NodeVM;
@@ -19,6 +20,8 @@ class Plugin {
     script: string,
     config: PluginConfig
   }
+
+  logs: string[] = []
 
   static getPluginMetaData(pluginPath: string) {
     return {
@@ -40,10 +43,21 @@ class Plugin {
               return t;
             },
           },
-          Notification
+          Notification,
+          logger: this.pushLog.bind(this)
         },
       },
     });
+  }
+
+  pushLog(...args: any[]) {
+    if (this.logs.length > LOG_LIMIT) {
+      this.logs.shift()
+    }
+    const log = args.map(content => JSON.stringify(content, null, 2)).join(' ')
+    this.logs.push(log)
+
+    this.wc.send(Call.FetchLog, this.metadata.config.id, this.logs.join('\n'))
   }
 
   sendUpdate () {
