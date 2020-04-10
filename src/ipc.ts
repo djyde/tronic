@@ -1,7 +1,7 @@
 import { ipcMain, Tray, WebContents, Notification } from "electron";
 import { NodeVM } from "vm2";
 import path = require("path");
-import { Event, Call } from "./constants";
+import { Event, Call, PluginStatus, PluginConfig, SerializedPlugin } from "./shared";
 import * as os from "os";
 import * as fs from "fs";
 import open from 'open'
@@ -9,17 +9,11 @@ import open from 'open'
 const DEFAULT_MENU_ICON = path.resolve(__dirname, "../../assets/menu.png");
 const PLUGINS_PATH = path.resolve(os.homedir(), ".ISLAND");
 
-export type PluginConfig = {
-  id: string;
-  name: string;
-  version: string;
-};
-
 class Plugin {
   private vm: NodeVM;
   private trays: Tray[] = [];
 
-  status = Status.STOPPED
+  status = PluginStatus.STOPPED
 
   metadata: {
     script: string,
@@ -60,7 +54,7 @@ class Plugin {
     const metaData = Plugin.getPluginMetaData(this.pluginPath)
     try {
       this.vm.run(metaData.script);
-      this.status = Status.RUNNING
+      this.status = PluginStatus.RUNNING
     } catch (e) {
       // TODO: catch error
       console.log(e)
@@ -83,7 +77,7 @@ class Plugin {
 
   deload() {
     this.destructor()
-    this.status = Status.STOPPED
+    this.status = PluginStatus.STOPPED
     this.sendUpdate()
   }
 
@@ -93,21 +87,6 @@ class Plugin {
       metadata: Plugin.getPluginMetaData(this.pluginPath)
     } as SerializedPlugin
   }
-}
-
-export type SerializedPlugin = {
-  status: Status,
-  metadata: {
-    script: string,
-    config: PluginConfig
-  }
-}
-
-enum Status {
-  READY,
-  RUNNING,
-  STOPPED,
-  ERROR
 }
 
 class Core {
@@ -177,6 +156,13 @@ export function init(wc: WebContents): void {
     }
   })
 
+  ipcMain.on(Call.DeloadPlugin, (event, pluginId: string) => {
+    const plugin = core.plugins.find(plugin => plugin.metadata.config.id === pluginId)
+    if (plugin) {
+      plugin.deload()
+    }
+  })
+
   ipcMain.on(Call.FetchPluginData, (event, pluginId: string) => {
     const plugin = core.plugins.find(plugin => plugin.metadata.config.id === pluginId)
     if (plugin) {
@@ -186,7 +172,7 @@ export function init(wc: WebContents): void {
 
   ipcMain.on(`${Event.Begin}`, (event) => {
     if (!core.loaded) {
-      core.loadAll()
+      core.collect()
     }
     event.reply(
       `${Call.PassPluginsList}`,
