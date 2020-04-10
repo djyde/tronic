@@ -16,6 +16,7 @@ export enum Call {
   ReloadPlugin = 'ReloadPlugin',
   FetchPluginData = 'FetchPluginData',
   GetPluginData = 'GetPluginData',
+  LoadPlugin = 'LoadPlugin',
   DeloadPlugin = 'DeloadPlugin',
 
   FetchLog = 'FetchLog'

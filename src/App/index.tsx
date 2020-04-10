@@ -108,7 +108,7 @@ function PluginMenuItem({
   function togglePluginStatus(event: React.ChangeEvent<HTMLInputElement>) {
     if (event.target.checked) {
       // load
-      ipcRenderer.send(Call.ReloadPlugin, plugin.metadata.config.id);
+      ipcRenderer.send(Call.LoadPlugin, plugin.metadata.config.id);
     } else {
       // deload
       ipcRenderer.send(Call.DeloadPlugin, plugin.metadata.config.id);
