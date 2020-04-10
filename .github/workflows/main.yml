@@ -29,5 +29,8 @@ jobs:
     # Runs a set of commands using the runners shell
     - name: dependencies
       run: npm i
+
     - name: publish
+      with:
+        repo-token: ${{ GITHUB_TOKEN }}
       run: npm run publish
