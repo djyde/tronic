@@ -4,7 +4,7 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 import * as ipc from './ipc'
 
 require('update-electron-app')({
-  repo: 'djyde/island-app-release',
+  repo: 'djyde/tronic',
 })
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
