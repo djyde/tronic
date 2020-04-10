@@ -1,4 +1,5 @@
 - [Introduction](/)
 - API
+  - [logger](/api/logger.md)
   - [Tray](/api/tray.md)
   - [Notification](/api/notification.md)

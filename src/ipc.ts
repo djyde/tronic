@@ -57,6 +57,10 @@ class Plugin {
     const log = args.map(content => JSON.stringify(content, null, 2)).join(' ')
     this.logs.push(log)
 
+    this.sendLogs()
+  }
+
+  sendLogs() {
     this.wc.send(Call.FetchLog, this.metadata.config.id, this.logs.join('\n'))
   }
 
@@ -184,10 +188,14 @@ export function init(wc: WebContents): void {
     }
   })
 
-  ipcMain.on(`${Event.Begin}`, (event) => {
-    if (!core.loaded) {
-      core.collect()
+  ipcMain.on(Call.FetchLog, (event, pluginId: string) => {
+    const plugin = core.plugins.find(plugin => plugin.metadata.config.id === pluginId)
+    if (plugin) {
+      plugin.sendLogs()
     }
+  })
+
+  ipcMain.on(`${Event.Begin}`, (event) => {
     event.reply(
       `${Call.PassPluginsList}`,
       core.plugins.map(plugin => plugin.serialize())

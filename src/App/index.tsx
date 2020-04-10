@@ -182,6 +182,8 @@ function LogViewer ({ pluginId }: {
         setLog(logs)
       }
     }
+    ipcRenderer.send(Call.FetchLog, pluginId)
+
     ipcRenderer.on(Call.FetchLog, handler)
 
     return () => {
@@ -197,7 +199,7 @@ function LogViewer ({ pluginId }: {
 
   return (
     <div>
-      <div ref={divRef} className='w-full border border-gray-200 h-64 whitespace-pre overflow-scroll text-sm select-text'>
+      <div ref={divRef} className='w-full border border-gray-200 h-64 whitespace-pre overflow-scroll text-sm select-text p-2'>
         {log}
       </div>
     </div>
