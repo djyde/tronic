@@ -22,7 +22,7 @@ import * as fs from "fs";
 import open from "open";
 
 const DEFAULT_MENU_ICON = path.resolve(__dirname, "../../assets/menu.png");
-const PLUGINS_PATH = path.resolve(os.homedir(), ".ISLAND");
+const PLUGINS_PATH = path.resolve(os.homedir(), ".TRONIC");
 const LOG_LIMIT = 500;
 
 class Plugin {

@@ -1,6 +1,6 @@
 # electron
 
-Island exposes a subset of Electron API. You could `require` them:
+Tronic exposes a subset of Electron API. You could `require` them:
 
 ```js
 const { shell } = require('electron')

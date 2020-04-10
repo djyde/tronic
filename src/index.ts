@@ -18,7 +18,7 @@ const createWindow = () => {
     height: 640,
     width: 1024,
     resizable: false,
-    title: 'Island',
+    title: 'Tronic',
     webPreferences: {
       nodeIntegration: true
     }
