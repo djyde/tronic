@@ -15,5 +15,31 @@ export enum Call {
 
   ReloadPlugin = 'ReloadPlugin',
   FetchPluginData = 'FetchPluginData',
-  GetPluginData = 'GetPluginData'
+  GetPluginData = 'GetPluginData',
+  LoadPlugin = 'LoadPlugin',
+  DeloadPlugin = 'DeloadPlugin',
+
+  FetchLog = 'FetchLog'
 }
+
+export enum PluginStatus {
+  READY,
+  RUNNING,
+  STOPPED,
+  ERROR
+}
+
+export type SerializedPlugin = {
+  status: PluginStatus,
+  metadata: {
+    script: string,
+    config: PluginConfig
+  }
+}
+
+
+export type PluginConfig = {
+  id: string;
+  name: string;
+  version: string;
+};

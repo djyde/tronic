@@ -1,6 +1,11 @@
 import { app, BrowserWindow } from 'electron';
+const isDev = require('electron-is-dev');
 declare const MAIN_WINDOW_WEBPACK_ENTRY: any;
 import * as ipc from './ipc'
+
+require('update-electron-app')({
+  repo: 'djyde/tronic',
+})
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -10,8 +15,10 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 640,
+    width: 1024,
+    resizable: false,
+    title: 'Tronic',
     webPreferences: {
       nodeIntegration: true
     }
@@ -21,7 +28,9 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
   ipc.init(mainWindow.webContents)
 };
 
