@@ -31,8 +31,8 @@ jobs:
         run: npm i
 
       - name: publish
-        run: npm run publish
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish
