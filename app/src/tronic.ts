@@ -114,7 +114,7 @@ class Plugin {
       this.status = PluginStatus.RUNNING;
     } catch (e) {
       // TODO: catch error
-      console.log(e);
+      this.pushLog(e.message)
     }
     this.sendUpdate();
   }
