@@ -13,6 +13,8 @@ export enum Call {
   ReloadAllPlugin = 'ReloadAllPlugin',
   OpenPluginFolder = 'OpenPluginFolder',
 
+  FetchPluginList = 'FetchPluginList',
+
   ReloadPlugin = 'ReloadPlugin',
   FetchPluginData = 'FetchPluginData',
   GetPluginData = 'GetPluginData',

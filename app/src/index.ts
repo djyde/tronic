@@ -7,31 +7,51 @@ require('update-electron-app')({
   repo: 'djyde/tronic',
 })
 
+tronic.init()
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
   app.quit();
 }
 
+let mainWindow: BrowserWindow | null = null
+
+let shouldQuit = false
+
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    height: 640,
-    width: 1024,
-    resizable: false,
-    title: 'Tronic',
-    webPreferences: {
-      nodeIntegration: true
+  if (!mainWindow) {
+    mainWindow = new BrowserWindow({
+      height: 640,
+      width: 1024,
+      resizable: false,
+      title: 'Tronic',
+      webPreferences: {
+        nodeIntegration: true
+      }
+    });
+  
+    // and load the index.html of the app.
+    mainWindow.loadURL(DEV ? 'http://localhost:1234' : `file://${path.join(__dirname, '../web/index.html')}`);
+  
+    // Open the DevTools.
+    if (DEV) {
+      mainWindow.webContents.openDevTools();
     }
-  });
-
-  // and load the index.html of the app.
-  mainWindow.loadURL(DEV ? 'http://localhost:1234' : `file://${path.join(__dirname, '../web/index.html')}`);
-
-  // Open the DevTools.
-  if (DEV) {
-    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.show()
   }
-  tronic.init(mainWindow.webContents)
+
+  mainWindow.on('close', (e) => {
+    if (process.platform === 'darwin') {
+      if (shouldQuit) {
+        mainWindow = null
+      } else {
+        e.preventDefault()
+        mainWindow!.hide()
+      }
+    }
+  })
 };
 
 // This method will be called when Electron has finished
@@ -48,7 +68,14 @@ app.on('window-all-closed', () => {
   }
 });
 
+app.on('before-quit', () => {
+  shouldQuit = true
+})
+
 app.on('activate', () => {
+  if (mainWindow) {
+    mainWindow.show()
+  }
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {

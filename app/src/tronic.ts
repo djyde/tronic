@@ -12,6 +12,7 @@ import {
   clipboard,
   nativeImage,
   powerSaveBlocker,
+  BrowserWindow,
 } from "electron";
 import { NodeVM } from "vm2";
 import path = require("path");
@@ -24,17 +25,25 @@ import {
 } from "./shared";
 import * as os from "os";
 import * as fs from "fs";
+import { ipcMain as ipc } from 'electron-better-ipc'
 
 const DEFAULT_MENU_ICON = path.resolve(__dirname, "../../assets/menu.png");
 const PLUGINS_PATH = path.resolve(os.homedir(), ".TRONIC");
 const LOG_LIMIT = 500;
+
+const callAllWindows = (cb: (w: BrowserWindow) => void) => {
+  const windows = BrowserWindow.getAllWindows()
+  windows.forEach((w) => {
+    cb(w)
+  })
+}
 
 class Plugin {
   private vm: NodeVM;
 
   status = PluginStatus.STOPPED;
 
-  destructor: () => void = () => {}
+  destructor: () => void = () => { }
 
   metadata: {
     script: string;
@@ -56,7 +65,7 @@ class Plugin {
     };
   }
 
-  constructor(private pluginPath: string, private wc: WebContents) {
+  constructor(private pluginPath: string) {
     this.metadata = Plugin.getPluginMetaData(pluginPath);
     this.vm = new NodeVM({
       console: "inherit",
@@ -93,30 +102,36 @@ class Plugin {
   }
 
   sendLogs() {
-    this.wc.send(Call.FetchLog, this.metadata.config.id, this.logs.join("\n"));
+    callAllWindows((w) => {
+      w.webContents.send(Call.FetchLog, this.metadata.config.id, this.logs.join("\n"));
+    })
   }
 
   sendUpdate() {
-    this.wc.send(
-      Event.PluginUpdated,
-      this.metadata.config.id,
-      this.serialize()
-    );
+    callAllWindows((w) => {
+      w.webContents.send(
+        Event.PluginUpdated,
+        this.metadata.config.id,
+        this.serialize()
+      )
+    })
   }
 
   load() {
-    const metaData = Plugin.getPluginMetaData(this.pluginPath);
-    try {
-      const exported = this.vm.run(metaData.script);
-      if (exported.destroy) {
-        this.destructor = exported.destroy
+    if (this.status !== PluginStatus.RUNNING) {
+      const metaData = Plugin.getPluginMetaData(this.pluginPath);
+      try {
+        const exported = this.vm.run(metaData.script);
+        if (exported.destroy) {
+          this.destructor = exported.destroy
+        }
+        this.status = PluginStatus.RUNNING;
+      } catch (e) {
+        // TODO: catch error
+        this.pushLog(e.message)
       }
-      this.status = PluginStatus.RUNNING;
-    } catch (e) {
-      // TODO: catch error
-      this.pushLog(e.message)
+      this.sendUpdate();
     }
-    this.sendUpdate();
   }
 
   deload() {
@@ -138,7 +153,7 @@ class Core {
 
   plugins: Plugin[] = [];
 
-  constructor(private wc: WebContents) {}
+  constructor() { }
 
   collectPluginsPath() {
     if (!fs.existsSync(PLUGINS_PATH)) {
@@ -163,7 +178,7 @@ class Core {
       plugin.destructor();
     });
 
-    this.plugins = this.collectPluginsPath().map((p) => new Plugin(p, this.wc));
+    this.plugins = this.collectPluginsPath().map((p) => new Plugin(p));
   }
 
   loadAll() {
@@ -173,50 +188,38 @@ class Core {
   }
 }
 
-export function init(wc: WebContents): void {
-  const core = new Core(wc);
+export function init(): void {
+  const core = new Core();
 
   core.collect();
 
-  ipcMain.on(Call.ReloadAllPlugin, (event) => {
-    core.loadAll();
-
-    event.reply(
-      `${Call.PassPluginsList}`,
-      core.plugins.map((plugin) => plugin.serialize())
-    );
-  });
-
-  ipcMain.on(Call.OpenPluginFolder, () => {
+  ipc.answerRenderer(Call.OpenPluginFolder, () => {
     shell.openItem(PLUGINS_PATH);
-  });
 
-  ipcMain.on(Call.LoadPlugin, (event, pluginId: string) => {
+  })
+
+  ipc.answerRenderer(Call.LoadPlugin, (pluginId: string) => {
     const plugin = core.plugins.find(
       (plugin) => plugin.metadata.config.id === pluginId
     );
     if (plugin) {
       plugin.load();
     }
-  });
+  })
 
-  ipcMain.on(Call.DeloadPlugin, (event, pluginId: string) => {
+  ipc.answerRenderer(Call.DeloadPlugin, (pluginId: string) => {
     const plugin = core.plugins.find(
       (plugin) => plugin.metadata.config.id === pluginId
     );
     if (plugin) {
       plugin.deload();
     }
-  });
+  })
 
-  ipcMain.on(Call.FetchPluginData, (event, pluginId: string) => {
-    const plugin = core.plugins.find(
-      (plugin) => plugin.metadata.config.id === pluginId
-    );
-    if (plugin) {
-      event.reply(`${Call.GetPluginData}_${pluginId}`, plugin.serialize());
-    }
-  });
+  ipc.answerRenderer(Call.FetchPluginList, async () => {
+    const list = core.plugins.map((plugin) => plugin.serialize())
+    return list
+  })
 
   ipcMain.on(Call.FetchLog, (event, pluginId: string) => {
     const plugin = core.plugins.find(
@@ -225,12 +228,5 @@ export function init(wc: WebContents): void {
     if (plugin) {
       plugin.sendLogs();
     }
-  });
-
-  ipcMain.on(`${Event.Begin}`, (event) => {
-    event.reply(
-      `${Call.PassPluginsList}`,
-      core.plugins.map((plugin) => plugin.serialize())
-    );
   });
 }

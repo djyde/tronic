@@ -1,7 +1,8 @@
 import * as React from "react";
-const { ipcRenderer, remote } = window.nodeRequire('electron');
 import { Event, Call, SerializedPlugin, PluginStatus } from "../../app/src/shared";
 import classnames from 'classnames'
+const { ipcRenderer } = window.nodeRequire('electron')
+const { ipcRenderer: ipc } = window.nodeRequire('electron-better-ipc')
 
 function App() {
   const [plugins, setPlugins] = React.useState([] as SerializedPlugin[]);
@@ -11,22 +12,14 @@ function App() {
   );
 
   React.useEffect(() => {
-    ipcRenderer.send(`${Event.Begin}`);
-
-    ipcRenderer.on(
-      `${Call.PassPluginsList}`,
-      (event, plugins: SerializedPlugin[]) => {
-        setPlugins(plugins);
-      }
-    );
+    ;(async () => {
+      const list: SerializedPlugin[] = await ipc.callMain(Call.FetchPluginList)
+      setPlugins(list)
+    })()
   }, []);
 
-  function reload(): void {
-    ipcRenderer.send(Call.ReloadAllPlugin);
-  }
-
   function openPluginFolder() {
-    ipcRenderer.send(Call.OpenPluginFolder);
+    ipc.callMain(Call.OpenPluginFolder)
   }
 
   function selectPlugin(plugin: SerializedPlugin) {
@@ -107,10 +100,10 @@ function PluginMenuItem({
   function togglePluginStatus(event: React.ChangeEvent<HTMLInputElement>) {
     if (event.target.checked) {
       // load
-      ipcRenderer.send(Call.LoadPlugin, plugin.metadata.config.id);
+      ipc.callMain(Call.LoadPlugin, plugin.metadata.config.id)
     } else {
       // deload
-      ipcRenderer.send(Call.DeloadPlugin, plugin.metadata.config.id);
+      ipc.callMain(Call.DeloadPlugin, plugin.metadata.config.id)
     }
   }
 
@@ -134,11 +127,6 @@ function PluginMenuItem({
 
 function PluginDetail({ plugin: originPlugin }: { plugin: SerializedPlugin }) {
   const { plugin } = useUpdatePluginData(originPlugin);
-
-  function reload() {
-    ipcRenderer.send(`${Call.ReloadPlugin}`, plugin.metadata.config.id);
-  }
-
 
   return (
     <div className="p-4">
