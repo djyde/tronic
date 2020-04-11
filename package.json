@@ -1,14 +1,16 @@
 {
   "name": "parcel-typescript-tailwind",
+  "main": "app/lib/index.js",
   "scripts": {
-    "dev": "parcel assets/index.html --out-dir app/dist",
-    "build": "npm run dev -- --public-url ./",
+    "dev": "parcel assets/index.html",
+    "build": "parcel build assets/index.html --out-dir app/web --public-url ./",
     "dev:app": "tsc -p app/tsconfig.json --watch",
     "build:app": "tsc -p app/tsconfig.json",
-    "clean": "rm -rf app/dist && rm -rf app/lib",
-    "app": "DEV=true electron app/"
+    "clean": "rm -rf app/web && rm -rf app/lib",
+    "app": "DEV=true electron app/",
+    "release": "electron-builder --mac --linux"
   },
-  "dependencies": {
+  "devDependencies": {
     "@egoist/md-colors": "^1.1.0",
     "@types/react": "^16.9.23",
     "@types/react-dom": "^16.9.5",
@@ -18,9 +20,8 @@
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "tailwindcss": "^1.2.0",
-    "typescript": "^3.8.3"
-  },
-  "devDependencies": {
-    "electron": "^8.2.1"
+    "typescript": "^3.8.3",
+    "electron": "^8.2.1",
+    "electron-builder": "^22.4.1"
   }
 }
