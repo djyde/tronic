@@ -84,6 +84,9 @@ class Plugin {
           powerSaveBlocker,
           shell,
           logger: this.pushLog.bind(this),
+          tronic: {
+            defaultTrayIcon: nativeImage.createFromPath(path.resolve(__dirname, '../assets/defaultTrayIcon.png'))
+          }
         },
       },
     });
