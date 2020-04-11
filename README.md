@@ -1,7 +1,17 @@
 # Build
 
-```
-yarn
+```bash
+# dependencies
 
-yarn dev
+yarn
+cd app && yarn
+
+# build
+
+npm run dev
+npm run dev:app
+
+# start
+npm run app
 ```
+

@@ -3,3 +3,61 @@
 @tailwind components;
 
 @tailwind utilities;
+
+html {
+  @apply h-full;
+}
+
+body {
+  @apply h-full;
+}
+
+#root {
+  @apply h-full
+}
+
+a {
+  transition: .2s all;
+}
+
+.switch-btn {
+  display: inline-block;
+  position: relative;
+  width: 42px;
+  height: 25px;
+}
+.switch-btn input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-btn .slider {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  cursor: pointer;
+  background-color: #ccc;
+  transition: .2s all;
+}
+
+.switch-btn .slider:before {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  background-color: #fff;
+  content: '';
+  left: 4px;
+  top: 4px;
+  transition: .2s all;
+}
+
+input:checked + .slider:before {
+  transform: translateX(17px);
+}
+
+input:checked + .slider {
+  @apply bg-green-500;
+}

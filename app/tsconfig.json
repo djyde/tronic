@@ -3,7 +3,8 @@
     "strictNullChecks": true,
     "module": "commonjs",
     "target": "es6",
-    "rootDir": "app",
+    "rootDir": "src",
+    "outDir": "lib",
     "jsx": "react"
   }
 }
