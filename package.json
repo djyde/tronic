@@ -6,10 +6,10 @@
     "build": "parcel build assets/index.html --out-dir app/web --public-url ./",
     "dev:app": "tsc -p app/tsconfig.json --watch",
     "build:app": "tsc -p app/tsconfig.json",
-    "clean": "rm -rf app/web && rm -rf app/lib",
+    "clean": "rm -rf app/web && rm -rf app/lib && rm -rf dist",
     "app": "DEV=true electron app/",
     "doc": "docsify serve docs -p 3001",
-    "release": "electron-builder --mac --linux"
+    "release": "npm run clean && npm run build && npm run build:app && electron-builder --mac --linux"
   },
   "devDependencies": {
     "@egoist/md-colors": "^1.1.0",
