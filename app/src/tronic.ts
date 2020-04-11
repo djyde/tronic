@@ -7,7 +7,11 @@ import {
   MenuItem,
   screen,
   dialog,
-  shell
+  shell,
+  systemPreferences,
+  clipboard,
+  nativeImage,
+  powerSaveBlocker,
 } from "electron";
 import { NodeVM } from "vm2";
 import path = require("path");
@@ -57,6 +61,7 @@ class Plugin {
     this.vm = new NodeVM({
       console: "inherit",
       require: {
+        builtin: ['path'],
         mock: {
           Tray,
           Notification,
@@ -64,6 +69,10 @@ class Plugin {
           MenuItem,
           screen,
           dialog,
+          systemPreferences,
+          clipboard,
+          nativeImage,
+          powerSaveBlocker,
           shell,
           logger: this.pushLog.bind(this),
         },
@@ -179,7 +188,6 @@ export function init(wc: WebContents): void {
   });
 
   ipcMain.on(Call.OpenPluginFolder, () => {
-    console.log(PLUGINS_PATH)
     shell.openItem(PLUGINS_PATH);
   });
 
